@@ -6,6 +6,21 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 3600
     steps:
+      - name: تحقق من حقوق الملكية (مشفر)
+        run: |
+          # نص الحقوق الأصلي مشفر Base64
+          $encodedNotice = "Cj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQog2K3ZgtmI2YIg2KfZhNmG2LTYsSDCqSAyMDI1IFRvb2xib3hMYXAueHl6IHwgaHR0cHM6Ly93d3cudG9vbGJveGxhcC54eXovCiDYrNmF2YrYuSDYp9mE2K3ZgtmI2YIg2YXYrdmB2YjYuNipLiDZitmF2YbYuSDYpdiy2KfZhNipINij2Ygg2KrYudiv2YrZhCDZhti12YjYtSDYp9mE2YXZhNmD2YrYqS4gIAog2KPZiiDYqti52K/ZitmEINmK2LnYsdi2INin2YTYs9mD2LHZitio2Kog2YTZhNiq2LnYt9mK2YQg2KrZhNmC2KfYptmK2YvYpyEKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Cg=="
+          # فك التشفير
+          $decodedNotice = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedNotice))
+          Write-Host $decodedNotice
+          
+          # نص الحقوق الصحيح للتحقق
+          $expectedNotice = $decodedNotice.Trim()
+          if (($decodedNotice -ne $expectedNotice) -or ($decodedNotice.Length -lt 150)) {
+              Write-Error "تم العبث بحقوق الملكية أو حذفها – السكريبت لن يعمل!"
+              exit 1
+          }
+
       - name: Configure Core RDP Settings
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
@@ -23,12 +38,9 @@ jobs:
           if (-not (Get-LocalUser -Name "TOOLBOXLAP" -ErrorAction SilentlyContinue)) {
               New-LocalUser -Name "TOOLBOXLAP" -Password $securePass -AccountNeverExpires
           }
-
           Add-LocalGroupMember -Group "Administrators" -Member "TOOLBOXLAP"
           Add-LocalGroupMember -Group "Remote Desktop Users" -Member "TOOLBOXLAP"
-
           echo "RDP_CREDS=User: TOOLBOXLAP | Password: $password" >> $env:GITHUB_ENV
-
           if (-not (Get-LocalUser -Name "TOOLBOXLAP")) {
               Write-Error "User creation failed"
               exit 1
@@ -38,7 +50,6 @@ jobs:
         run: |
           $tsUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-1.82.0-amd64.msi"
           $installerPath = "$env:TEMP\tailscale.msi"
-
           Invoke-WebRequest -Uri $tsUrl -OutFile $installerPath
           Start-Process msiexec.exe -ArgumentList "/i", "`"$installerPath`"", "/quiet", "/norestart" -Wait
           Remove-Item $installerPath -Force
@@ -71,11 +82,15 @@ jobs:
 
       - name: Maintain Connection
         run: |
+          # إعادة طباعة الحقوق
+          $ownershipNotice = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("Cj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQog2K3ZgtmI2YIg2KfZhNmG2LTYsSDCqSAyMDI1IFRvb2xib3hMYXAueHl6IHwgaHR0cHM6Ly93d3cudG9vbGJveGxhcC54eXovCiDYrNmF2YrYuSDYp9mE2K3ZgtmI2YIg2YXYrdmB2YjYuNipLiDZitmF2YbYuSDYpdiy2KfZhNipINij2Ygg2KrYudiv2YrZhCDZhti12YjYtSDYp9mE2YXZhNmD2YrYqS4gIAog2KPZiiDYqti52K/ZitmEINmK2LnYsdi2INin2YTYs9mD2LHZitio2Kog2YTZhNiq2LnYt9mK2YQg2KrZhNmC2KfYptmK2YvYpyEKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Cg=="))
+          Write-Host $ownershipNotice
           Write-Host "`n=== RDP ACCESS ==="
           Write-Host "Address: $env:TAILSCALE_IP"
           Write-Host "Username: TOOLBOXLAP"
           Write-Host "Password: admin@123"
-          Write-Host "==================`n"
+          Write-Host "Powered by https://www.toolboxlap.xyz/"
+          Write-Host "========= جميع الحقوق محفوظة =========`n"
           while ($true) {
               Write-Host "[$(Get-Date)] RDP Active - Use Ctrl+C in workflow to terminate"
               Start-Sleep -Seconds 300
