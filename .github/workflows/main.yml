@@ -8,15 +8,12 @@ jobs:
     steps:
       - name: تحقق من حقوق الملكية (مشفر)
         run: |
-          # نص الحقوق الأصلي مشفر Base64
           $encodedNotice = "Cj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQog2K3ZgtmI2YIg2KfZhNmG2LTYsSDCqSAyMDI1IFRvb2xib3hMYXAueHl6IHwgaHR0cHM6Ly93d3cudG9vbGJveGxhcC54eXovCiDYrNmF2YrYuSDYp9mE2K3ZgtmI2YIg2YXYrdmB2YjYuNipLiDZitmF2YbYuSDYpdiy2KfZhNipINij2Ygg2KrYudiv2YrZhCDZhti12YjYtSDYp9mE2YXZhNmD2YrYqS4gIAog2KPZiiDYqti52K/ZitmEINmK2LnYsdi2INin2YTYs9mD2LHZitio2Kog2YTZhNiq2LnYt9mK2YQg2KrZhNmC2KfYptmK2YvYpyEKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Cg=="
-          # فك التشفير
           $decodedNotice = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encodedNotice))
           Write-Host $decodedNotice
-          
-          # نص الحقوق الصحيح للتحقق
-          $expectedNotice = $decodedNotice.Trim()
-          if (($decodedNotice -ne $expectedNotice) -or ($decodedNotice.Length -lt 150)) {
+
+          # تحقق مرن من العبارة الجوهرية
+          if (-not $decodedNotice -or $decodedNotice -notlike "*ToolboxLap.xyz*") {
               Write-Error "تم العبث بحقوق الملكية أو حذفها – السكريبت لن يعمل!"
               exit 1
           }
@@ -82,7 +79,6 @@ jobs:
 
       - name: Maintain Connection
         run: |
-          # إعادة طباعة الحقوق
           $ownershipNotice = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("Cj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQog2K3ZgtmI2YIg2KfZhNmG2LTYsSDCqSAyMDI1IFRvb2xib3hMYXAueHl6IHwgaHR0cHM6Ly93d3cudG9vbGJveGxhcC54eXovCiDYrNmF2YrYuSDYp9mE2K3ZgtmI2YIg2YXYrdmB2YjYuNipLiDZitmF2YbYuSDYpdiy2KfZhNipINij2Ygg2KrYudiv2YrZhCDZhti12YjYtSDYp9mE2YXZhNmD2YrYqS4gIAog2KPZiiDYqti52K/ZitmEINmK2LnYsdi2INin2YTYs9mD2LHZitio2Kog2YTZhNiq2LnYt9mK2YQg2KrZhNmC2KfYptmK2YvYpyEKPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Cg=="))
           Write-Host $ownershipNotice
           Write-Host "`n=== RDP ACCESS ==="
